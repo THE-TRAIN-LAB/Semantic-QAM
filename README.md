@@ -6,7 +6,9 @@
 
 > **Main Focus:** Implementation of Semantic QAM. This repository provides the official implementation for a custom physical layer constellation where symbols are positioned based on their semantic importance, deeply integrating Vector Quantized-Variational Autoencoders (VQ-VAE) with NVIDIA Sionna.
 
-### 🌟 [Click here to view the Semantic QAM Training Evolution Animation!](https://htmlpreview.github.io/?https://github.com/albertsproject400-cell/Semantic-QAM/blob/main/Sem_QAM.html)
+### 🌟 Semantic QAM Training Evolution Animation
+
+![Semantic QAM Animation](sem_qam_animation.webp)
 
 ---
 
