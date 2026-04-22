@@ -53,7 +53,7 @@ If you use this code in your research, please cite our paper:
 ```bibtex
 @inproceedings{shaju2026semantic,
   title={Not All Concepts Are Equal: Importance-Aware Constellation Design for Semantic Communications},
-  author={Shaju, Albert and Thomas, Christo Kurisummoottil and Chowdhury, Mayukh Roy},
+  author={Albert Shaju, Christo Kurisummoottil Thomas, Mayukh Roy Chowdhury},
   booktitle={IEEE Global Communications Conference (GLOBECOM)},
   year={2026}
 }
