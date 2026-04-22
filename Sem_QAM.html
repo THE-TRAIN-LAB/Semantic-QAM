@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic QAM Training Evolution</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            /* Deep slate dark mode */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            color: #f8fafc;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-weight: 800;
+            background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+        }
+
+        button {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #f8fafc;
+            padding: 10px 20px;
+            margin: 0 10px;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+        }
+
+        #chart {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            text-align: center;
+            max-width: 600px;
+            font-size: 15px;
+            line-height: 1.6;
+            padding: 15px 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border-left: 4px solid #818cf8;
+            backdrop-filter: blur(10px);
+        }
+
+        .epoch-display {
+            font-size: 20px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+
+        .epoch-counter-value {
+            color: #38bdf8;
+            font-weight: 800;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h2>Learned Semantic M-QAM Evolution</h2>
+        <div class="epoch-display">Training Epoch: <span id="epoch-counter" class="epoch-counter-value">0</span></div>
+    </div>
+
+    <div class="controls">
+        <button id="btn-train">Start Semantic Training</button>
+        <button id="btn-reset">Reset to Standard Grid</button>
+    </div>
+
+    <div id="chart"></div>
+
+    <div class="info-panel" id="info-text">
+        <strong>Standard 64-QAM:</strong> Uniform physical spacing. Treats all semantic concepts equally, leaving
+        task-critical symbols just as vulnerable to channel noise as background noise.
+    </div>
+
+    <script>
+        const width = 400;
+        const height = 400;
+        const margin = 50;
+        const innerWidth = width - margin * 2;
+        const innerHeight = height - margin * 2;
+        const duration = 4000; // 4 seconds smooth animation
+        let isTraining = false;
+
+        const svg = d3.select("#chart")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", `translate(${width / 2}, ${height / 2})`);
+
+        // Definitions for Glow Filters
+        const defs = svg.append("defs");
+        const filter = defs.append("filter")
+            .attr("id", "glow")
+            .attr("x", "-50%")
+            .attr("y", "-50%")
+            .attr("width", "200%")
+            .attr("height", "200%");
+        filter.append("feGaussianBlur")
+            .attr("stdDeviation", "4")
+            .attr("result", "coloredBlur");
+        const feMerge = filter.append("feMerge");
+        feMerge.append("feMergeNode").attr("in", "coloredBlur");
+        feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+        // Draw axes and origin crosshair (Subtle dark mode colors)
+        svg.append("line").attr("x1", -innerWidth / 2).attr("x2", innerWidth / 2).attr("y1", 0).attr("y2", 0).attr("stroke", "#334155").attr("stroke-width", 1.5).attr("stroke-dasharray", "4 4");
+        svg.append("line").attr("x1", 0).attr("x2", 0).attr("y1", -innerHeight / 2).attr("y2", innerHeight / 2).attr("stroke", "#334155").attr("stroke-width", 1.5).attr("stroke-dasharray", "4 4");
+        svg.append("circle").attr("cx", 0).attr("cy", 0).attr("r", 4).attr("fill", "#64748b");
+
+        // Generate 64 points for 8x8 QAM grid
+        let data = [];
+        let index = 0;
+        const gridSpacing = innerWidth / 9;
+
+        for (let i = -3.5; i <= 3.5; i++) {
+            for (let j = -3.5; j <= 3.5; j++) {
+                // Generate importance: 80% low (<0.4), 20% high (>0.7)
+                let isHigh = Math.random() > 0.8;
+                let importance = isHigh ? 0.7 + Math.random() * 0.3 : Math.random() * 0.4;
+
+                data.push({
+                    id: index++,
+                    gridX: i * gridSpacing,
+                    gridY: j * gridSpacing,
+                    importance: importance,
+                    isTop: false
+                });
+            }
+        }
+
+        // Flag the top 10 most important concepts for visual emphasis
+        data.sort((a, b) => b.importance - a.importance);
+        for (let i = 0; i < 10; i++) data[i].isTop = true;
+
+        // Custom color scale for dark mode: Low -> Cyan/Slate, High -> Bright Amber/Pink
+        const colorScale = d3.scaleLinear()
+            .domain([0, 0.5, 1])
+            .range(["#38bdf8", "#818cf8", "#fbbf24"]);
+
+        // Initial rendering of points
+        const circles = svg.selectAll(".symbol")
+            .data(data, d => d.id)
+            .enter()
+            .append("circle")
+            .attr("class", "symbol")
+            .attr("cx", d => d.gridX)
+            .attr("cy", d => d.gridY)
+            .attr("r", d => d.isTop ? 8 : 5)
+            .attr("fill", d => colorScale(d.importance))
+            .attr("stroke", d => d.isTop ? "#fff" : "none")
+            .attr("stroke-width", d => d.isTop ? 1.5 : 0)
+            .attr("opacity", d => d.isTop ? 1 : 0.6)
+            .attr("filter", d => d.isTop ? "url(#glow)" : "");
+
+        // Pre-calculate learned positions
+        data.forEach(d => {
+            if (d.importance < 0.5) {
+                // Crowd low importance in the center (sacrifice power)
+                const r = Math.random() * (innerWidth * 0.12); // Tighter cluster
+                const theta = Math.random() * 2 * Math.PI;
+                d.learnedX = r * Math.cos(theta);
+                d.learnedY = r * Math.sin(theta);
+            } else {
+                // Isolate high importance throughout the outer regions
+                const r = (innerWidth * 0.25) + Math.random() * (innerWidth * 0.20);
+                const theta = Math.random() * 2 * Math.PI;
+                d.learnedX = r * Math.cos(theta);
+                d.learnedY = r * Math.sin(theta);
+            }
+        });
+
+        // Pulsing function for high-importance nodes
+        function pulse() {
+            if (!isTraining) return; // Stop pulsing if we reset
+
+            circles.filter(d => d.isTop)
+                .transition()
+                .duration(1000)
+                .attr("r", 10)
+                .attr("opacity", 1)
+                .transition()
+                .duration(1000)
+                .attr("r", 8)
+                .attr("opacity", 0.9)
+                .on("end", pulse);
+        }
+
+        // Animation loop logic
+        function runTraining() {
+            isTraining = true;
+
+            // Staggered fluid animation
+            circles.transition()
+                .duration(duration)
+                .delay((d, i) => Math.random() * 1000) // Staggered start times
+                .ease(d3.easeCubicInOut)
+                .attr("cx", d => d.learnedX)
+                .attr("cy", d => d.learnedY)
+                .on("end", function (d, i) {
+                    // Start pulsing once all have transitioned (checking roughly by delay)
+                    if (d.isTop && i === data.length - 1) {
+                        pulse();
+                    }
+                });
+
+            // Wait 1.5 seconds for the stagger to finish before pulsing top symbols just in case
+            setTimeout(() => {
+                pulse();
+            }, duration + 1000);
+
+            // Animate counter
+            d3.select("#epoch-counter").transition()
+                .duration(duration + 1000)
+                .ease(d3.easeCubicInOut)
+                .tween("text", function () {
+                    const i = d3.interpolateRound(0, 3000);
+                    return function (t) {
+                        this.textContent = i(t);
+                    };
+                });
+
+            // Update text at end of animation
+            setTimeout(() => {
+                d3.select("#info-text").html("<strong style='color:#fbbf24'>Semantic QAM:</strong> High-importance symbols smoothly migrate to uncrowded, isolated regions (probabilistic isolation); low-importance symbols are deliberately crowded in the center to save physical transmit power.");
+
+                // Wait 4 seconds showing the pulsing state, then reset
+                setTimeout(runReset, 4000);
+            }, duration + 1000);
+        }
+
+        function runReset() {
+            isTraining = false; // Stop the pulse
+
+            circles.interrupt(); // Stop any active transitions or pulses
+
+            circles.transition()
+                .duration(1500)
+                .delay((d, i) => Math.random() * 500) // Slight stagger on reset too
+                .ease(d3.easeCubicOut)
+                .attr("cx", d => d.gridX)
+                .attr("cy", d => d.gridY)
+                .attr("r", d => d.isTop ? 8 : 5)
+                .attr("opacity", d => d.isTop ? 1 : 0.6);
+
+            d3.select("#epoch-counter").text("0");
+            d3.select("#info-text").html("<strong>Standard 64-QAM:</strong> Uniform physical spacing. Treats all semantic concepts equally, leaving task-critical symbols just as vulnerable to channel noise as background noise.");
+
+            // Wait for reset animation (2s total) + 1.5s pause, then train again
+            setTimeout(runTraining, 3500);
+        }
+
+        // Connect buttons to manually trigger
+        d3.select("#btn-train").on("click", () => {
+            // Clear timeouts if manual click to avoid overlaps (simple implementation just starts it)
+            runTraining();
+        });
+        d3.select("#btn-reset").on("click", runReset);
+
+        // Start the infinite loop automatically after 1.5 seconds
+        setTimeout(runTraining, 1500);
+
+    </script>
+</body>
+
+</html>
