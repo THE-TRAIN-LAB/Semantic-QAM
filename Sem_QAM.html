@@ -102,8 +102,9 @@
     </div>
 
     <div class="controls">
-        <button id="btn-train">Start Semantic Training</button>
-        <button id="btn-reset">Reset to Standard Grid</button>
+        <button id="btn-standard">Standard QAM</button>
+        <button id="btn-training">Training</button>
+        <button id="btn-semantic">Semantic QAM</button>
     </div>
 
     <div id="chart"></div>
@@ -227,8 +228,17 @@
                 .on("end", pulse);
         }
 
+        let activeTimeouts = [];
+        function stopTimeouts() {
+            activeTimeouts.forEach(clearTimeout);
+            activeTimeouts = [];
+            circles.interrupt();
+            d3.select("#epoch-counter").interrupt();
+        }
+
         // Animation loop logic
-        function runTraining() {
+        function runTraining(autoLoop = true) {
+            stopTimeouts();
             isTraining = true;
 
             // Staggered fluid animation
@@ -239,16 +249,10 @@
                 .attr("cx", d => d.learnedX)
                 .attr("cy", d => d.learnedY)
                 .on("end", function (d, i) {
-                    // Start pulsing once all have transitioned (checking roughly by delay)
-                    if (d.isTop && i === data.length - 1) {
-                        pulse();
-                    }
+                    if (d.isTop && i === data.length - 1) pulse();
                 });
 
-            // Wait 1.5 seconds for the stagger to finish before pulsing top symbols just in case
-            setTimeout(() => {
-                pulse();
-            }, duration + 1000);
+            activeTimeouts.push(setTimeout(pulse, duration + 1000));
 
             // Animate counter
             d3.select("#epoch-counter").transition()
@@ -262,18 +266,18 @@
                 });
 
             // Update text at end of animation
-            setTimeout(() => {
+            activeTimeouts.push(setTimeout(() => {
                 d3.select("#info-text").html("<strong style='color:#fbbf24'>Semantic QAM:</strong> High-importance symbols smoothly migrate to uncrowded, isolated regions (probabilistic isolation); low-importance symbols are deliberately crowded in the center to save physical transmit power.");
 
-                // Wait 4 seconds showing the pulsing state, then reset
-                setTimeout(runReset, 4000);
-            }, duration + 1000);
+                if (autoLoop) {
+                    activeTimeouts.push(setTimeout(() => runReset(true), 4000));
+                }
+            }, duration + 1000));
         }
 
-        function runReset() {
+        function runReset(autoLoop = true) {
+            stopTimeouts();
             isTraining = false; // Stop the pulse
-
-            circles.interrupt(); // Stop any active transitions or pulses
 
             circles.transition()
                 .duration(1500)
@@ -287,19 +291,37 @@
             d3.select("#epoch-counter").text("0");
             d3.select("#info-text").html("<strong>Standard 64-QAM:</strong> Uniform physical spacing. Treats all semantic concepts equally, leaving task-critical symbols just as vulnerable to channel noise as background noise.");
 
-            // Wait for reset animation (2s total) + 1.5s pause, then train again
-            setTimeout(runTraining, 3500);
+            if (autoLoop) {
+                activeTimeouts.push(setTimeout(() => runTraining(true), 3500));
+            }
+        }
+
+        function runSemantic() {
+            stopTimeouts();
+            isTraining = true;
+
+            circles.transition()
+                .duration(1000)
+                .ease(d3.easeCubicOut)
+                .attr("cx", d => d.learnedX)
+                .attr("cy", d => d.learnedY)
+                .attr("r", d => d.isTop ? 8 : 5)
+                .attr("opacity", d => d.isTop ? 1 : 0.6)
+                .on("end", function(d, i) {
+                    if (d.isTop && i === data.length - 1) pulse();
+                });
+
+            d3.select("#epoch-counter").text("3000");
+            d3.select("#info-text").html("<strong style='color:#fbbf24'>Semantic QAM:</strong> High-importance symbols smoothly migrate to uncrowded, isolated regions (probabilistic isolation); low-importance symbols are deliberately crowded in the center to save physical transmit power.");
         }
 
         // Connect buttons to manually trigger
-        d3.select("#btn-train").on("click", () => {
-            // Clear timeouts if manual click to avoid overlaps (simple implementation just starts it)
-            runTraining();
-        });
-        d3.select("#btn-reset").on("click", runReset);
+        d3.select("#btn-training").on("click", () => runTraining(false));
+        d3.select("#btn-standard").on("click", () => runReset(false));
+        d3.select("#btn-semantic").on("click", runSemantic);
 
         // Start the infinite loop automatically after 1.5 seconds
-        setTimeout(runTraining, 1500);
+        activeTimeouts.push(setTimeout(() => runTraining(true), 1500));
 
     </script>
 </body>
