@@ -8,7 +8,7 @@
 
 ### 🌟 Semantic QAM Training Evolution Animation
 
-https://github.com/albertsproject400-cell/Semantic-QAM/raw/main/SEM_QAM_ANIM.mp4
+![Semantic QAM Animation](SEM_QAM_ANIM.gif)
 
 ---
 
