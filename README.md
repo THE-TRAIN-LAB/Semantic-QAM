@@ -8,7 +8,9 @@
 
 ### 🌟 Semantic QAM Training Evolution Animation
 
-<img src="SEM_QAM_ANIM.gif" width="400" alt="Semantic QAM Animation" />
+<div align="center">
+  <img src="SEM_QAM_ANIM.gif" width="500" alt="Semantic QAM Animation" />
+</div>
 
 ---
 
