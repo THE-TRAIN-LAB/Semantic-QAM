@@ -8,7 +8,7 @@
 
 ### 🌟 Semantic QAM Training Evolution Animation
 
-![Semantic QAM Animation](sem_qam_animation.webp)
+<video src="SEM_QAM_ANIM.mp4" autoplay loop muted playsinline width="100%"></video>
 
 ---
 
