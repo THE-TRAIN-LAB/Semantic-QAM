@@ -86,7 +86,7 @@ Ensure your Python environment has the following installed:
 ## 📝 Citation
 If you use this code in your research, please cite our paper:
 ```bibtex
-@inproceedings{shaju2026semantic,
+@inproceedings{semqam2026semantic,
   title={Not All Concepts Are Equal: Importance-Aware Constellation Design for Semantic Communications},
   author={Albert Shaju and Christo Kurisummoottil Thomas and Mayukh Roy Chowdhury},
   booktitle={IEEE Global Communications Conference (GLOBECOM)},
